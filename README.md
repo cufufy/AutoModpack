@@ -107,10 +107,10 @@ The plugin keeps watching the `mods/` directory for file changes, so future upda
 
 ### Building the Plugin
 
-Use Gradle to rebuild the plugin after making changes:
+Use Maven to rebuild the plugin after making changes:
 
 ```bash
-./gradlew :server-plugin:build --rerun-tasks --console=plain
+mvn -pl server-plugin -am package
 ```
 
 ### Hosting Configuration
