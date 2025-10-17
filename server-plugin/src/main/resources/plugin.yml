@@ -1,5 +1,5 @@
 name: AutoModpackPlugin
-main: pl.skidam.automodpack.plugin.AutoModpackPlugin
+main: com.cufufy.amp.plugin.AutoModpackPlugin
 version: "@pluginVersion@"
 api-version: "1.20"
 author: AutoModpack Team

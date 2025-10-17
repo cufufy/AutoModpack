@@ -4,5 +4,5 @@ description: Bridge plugin to integrate AutoModpack with Paper/Spigot servers.
 authors:
   - AutoModpack Team
 website: https://modrinth.com/mod/automodpack
-main: pl.skidam.automodpack.plugin.AutoModpackPlugin
+main: com.cufufy.amp.plugin.AutoModpackPlugin
 api-version: "1.20"
