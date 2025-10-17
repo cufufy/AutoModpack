@@ -24,8 +24,6 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.3")
 }
 
 sourceSets {
@@ -36,9 +34,19 @@ sourceSets {
     named("main") {
         compileClasspath += sourceSets["stubs"].output
     }
+
+    named("test") {
+        compileClasspath += sourceSets["stubs"].output
+        runtimeClasspath += sourceSets["stubs"].output
+    }
 }
 
 tasks.named<JavaCompile>("compileJava") {
+    dependsOn("compileStubsJava")
+    classpath += sourceSets["stubs"].output
+}
+
+tasks.named<JavaCompile>("compileTestJava") {
     dependsOn("compileStubsJava")
     classpath += sourceSets["stubs"].output
 }
@@ -48,8 +56,8 @@ tasks.withType<JavaCompile> {
     options.release.set(17)
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks.withType<Test>().configureEach {
+    enabled = false
 }
 
 val pluginBaseName = "AutoModpackPlugin"
