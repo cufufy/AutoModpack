@@ -8,7 +8,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -478,8 +477,9 @@ final class NmsReflection {
     private static MethodHandle resolveCraftServerHandle() {
         try {
             Class<?> craftServerClass = Class.forName("org.bukkit.craftbukkit.CraftServer");
+            Method method = craftServerClass.getMethod("getServer");
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            return lookup.findVirtual(craftServerClass, "getServer", MethodType.methodType(CLASS_MINECRAFT_SERVER));
+            return lookup.unreflect(method);
         } catch (ReflectiveOperationException e) {
             LOGGER.severe("Failed to resolve CraftServer#getServer handle: " + e.getMessage());
             return null;
