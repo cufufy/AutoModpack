@@ -6,6 +6,8 @@ pluginManagement {
         maven("https://maven.fabricmc.net/") { name = "Fabric" }
         maven("https://maven.neoforged.net/releases/") { name = "NeoForged" }
         maven("https://maven.kikugie.dev/snapshots") { name = "KikuGie" }
+        maven("https://repo.papermc.io/repository/maven-public/") { name = "Paper" }
+        maven("https://repo.papermc.io/repository/maven-releases/") { name = "PaperReleases" }
     }
 }
 
@@ -16,6 +18,7 @@ plugins {
 }
 
 include(":core")
+include(":server-plugin")
 
 fun getProperty(key: String): String? {
     return settings.extra[key] as? String
