@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
@@ -31,6 +34,8 @@ public final class AutoModpackPlugin extends JavaPlugin {
 
             PluginSettings settings = loadSettings(pluginDirectory);
             hostService = new ModpackHostService(settings, pluginDirectory, getLogger());
+
+            ensureAutoModpackModPresent(hostService.modsDirectory());
             hostService.start();
 
             loginBridge = new LoginBridgeManager(this, settings, getLogger());
@@ -42,6 +47,13 @@ public final class AutoModpackPlugin extends JavaPlugin {
             getLogger().info("AutoModpack plugin initialized. Mods directory: " + hostService.modsDirectory());
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to initialize AutoModpack plugin", e);
+            if (loginBridge != null) {
+                loginBridge.close();
+            }
+            if (hostService != null) {
+                hostService.close();
+            }
+            getServer().getPluginManager().disablePlugin(this);
         }
     }
 
@@ -60,6 +72,21 @@ public final class AutoModpackPlugin extends JavaPlugin {
         try (InputStream resource = getResource("config.yml")) {
             Path configFile = pluginDirectory.resolve("config.yml");
             return SettingsLoader.load(configFile, resource);
+        }
+    }
+
+    private void ensureAutoModpackModPresent(Path modsDirectory) throws IOException {
+        Files.createDirectories(modsDirectory);
+
+        try (Stream<Path> entries = Files.list(modsDirectory)) {
+            boolean hasMod = entries
+                    .filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString().toLowerCase(Locale.ROOT))
+                    .anyMatch(name -> name.endsWith(".jar") && name.contains("automodpack"));
+
+            if (!hasMod) {
+                throw new IOException("AutoModpack mod jar not found in " + modsDirectory);
+            }
         }
     }
 

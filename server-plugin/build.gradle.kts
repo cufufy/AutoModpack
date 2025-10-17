@@ -1,9 +1,8 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Copy
 
 plugins {
     java
-    id("com.gradleup.shadow")
 }
 
 group = providers.gradleProperty("mod.group").get()
@@ -16,14 +15,19 @@ java {
 
 repositories {
     mavenCentral()
-    maven("https://repo1.maven.org/maven2/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.papermc.io/repository/maven-snapshots/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.82")
+    implementation("org.tomlj:tomlj:1.1.1")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.5.1")
+    implementation("io.netty:netty-all:4.1.118.Final")
+    implementation("com.github.luben:zstd-jni:1.5.7-5")
 }
 
 sourceSets {
@@ -67,13 +71,9 @@ tasks.withType<Jar>().configureEach {
 }
 
 tasks.named<Jar>("jar") {
-    archiveClassifier.set("plain")
-}
-
-tasks.named<ShadowJar>("shadowJar") {
-    archiveClassifier.set("")
     archiveBaseName.set(pluginBaseName)
-    mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(configurations.runtimeClasspath.get().filter { it.name.endsWith(".jar") }.map { zipTree(it) })
 }
 
 tasks.processResources {
@@ -89,13 +89,13 @@ tasks.processResources {
 }
 
 val pluginDistribution = tasks.register<Copy>("pluginDistribution") {
-    dependsOn("shadowJar")
-    from(tasks.named<ShadowJar>("shadowJar").flatMap { it.archiveFile })
+    dependsOn(tasks.named<Jar>("jar"))
+    from(tasks.named<Jar>("jar").flatMap { it.archiveFile })
     into(layout.buildDirectory.dir("distributions/AutoModpackPlugin"))
 }
 
 tasks.named("assemble") {
-    dependsOn("shadowJar", pluginDistribution)
+    dependsOn(pluginDistribution)
 }
 
 tasks.named("build") {
