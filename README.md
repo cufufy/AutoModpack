@@ -75,6 +75,57 @@ That's typically all you need to do! AutoModpack will automatically create the m
 
 Prefer an all-in-one solution? You can also use our [modified Fabric installer](https://github.com/Skidamek/AutoModpack-Installer/releases/tag/Latest) which downloads AutoModpack alongside the Fabric loader.
 
+## 🧩 Paper & Spigot Server Plugin
+
+AutoModpack ships with a dedicated Bukkit-compatible plugin (`AutoModpackPlugin`) that lets you run the host-side logic without installing a traditional mod loader on your server. The plugin mirrors the behaviour of the mod: it generates modpack metadata, serves it to clients, and keeps track of mod/config changes in real time.
+
+### Installation & First Launch
+
+1. Download the `AutoModpackPlugin` JAR from the releases page (it is bundled alongside the standard mod download).
+2. Drop the JAR into your server's `plugins/` directory and start the server.
+3. On first run the plugin will:
+   * create its data directory (`plugins/AutoModpackPlugin/`) along with managed `mods/` and `configs/` folders used for syncing content to players;【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModpackHostService.java†L24-L44】【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModRepositoryWatcher.java†L20-L41】
+   * generate the default `config.yml` next to the plugin JAR so you can tweak behaviour without editing resources in-place.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/AutoModpackPlugin.java†L19-L52】
+4. Copy the mods and data packs you want to distribute into `plugins/AutoModpackPlugin/mods/`. Optional client configs can be mirrored via `plugins/AutoModpackPlugin/configs/`; the plugin keeps this folder in sync with the generated host modpack directory.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ConfigMirror.java†L24-L45】
+5. Restart or reload the server to let AutoModpack regenerate the modpack metadata.
+
+The plugin keeps watching the `mods/` directory for file changes, so future updates are picked up automatically without restarting the server.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModRepositoryWatcher.java†L32-L70】
+
+### Hosting Configuration
+
+All runtime options live in `plugins/AutoModpackPlugin/config.yml`.
+
+* **Modpack name & nagging** – `modpack-name`, `force-mod`, `nag-missing-mod`, and related message/link fields control how the plugin introduces AutoModpack to new players.【F:server-plugin/src/main/resources/config.yml†L1-L18】
+* **Loader compatibility** – Add extra loaders under `accepted-loaders` to let clients from compatible mod loaders connect (use with caution, most mods remain loader-specific).【F:server-plugin/src/main/resources/config.yml†L7-L8】
+* **Version pinning** – `automodpack-version` and `minecraft-version` define the expected client versions that will be enforced during the login handshake.【F:server-plugin/src/main/resources/config.yml†L9-L11】
+* **Built-in host** – Tweak `server-host.*` to expose the Netty host directly or behind a reverse proxy. Use `bind-address`/`bind-port` to pick where the host listens, `address-to-send`/`port-to-send` for the external address presented to clients, and `disable-internal-tls` or `bandwidth-limit` if you run through a proxy.【F:server-plugin/src/main/resources/config.yml†L12-L18】
+
+AutoModpack always attempts an initial modpack generation when the plugin loads. If there are no files to host yet the plugin stays up, continues watching the `mods/` folder, and logs that hosting will start once content becomes available.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModpackHostService.java†L60-L87】
+
+### Operating the Host
+
+Typical workflow for server administrators:
+
+1. **Generate or refresh metadata** – `/automodpack generate`
+2. **Start or stop the host** – `/automodpack host start`, `/automodpack host stop`, `/automodpack host restart`
+3. **Inspect host status** – `/automodpack host`, `/automodpack host connections`, `/automodpack host fingerprint`
+4. **Reload configuration** – `/automodpack config reload`
+
+These commands mirror the Fabric/Forge mod, so your players already familiar with AutoModpack will feel at home.【F:docs/commands/commands.mdx†L1-L10】
+
+### Commands & Permissions
+
+| Command | Description | Required permission |
+| --- | --- | --- |
+| `/automodpack` | Prints the installed AutoModpack version and available sub-commands. | Minecraft permission level 3 (server operator).【F:docs/commands/commands.mdx†L1-L3】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L23-L60】 |
+| `/automodpack generate` | Rebuilds the modpack metadata from the contents of your `mods/` and synced files. | Permission level 3.【F:docs/commands/commands.mdx†L3-L4】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L26-L33】 |
+| `/automodpack host [start|stop|restart]` | Manages the embedded Netty host that distributes the modpack. | Permission level 3.【F:docs/commands/commands.mdx†L4-L7】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L33-L58】 |
+| `/automodpack host connections` | Lists active modpack download sessions for auditing. | Permission level 3.【F:docs/commands/commands.mdx†L7-L8】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L45-L89】 |
+| `/automodpack host fingerprint` | Prints the TLS fingerprint clients must trust when connecting. | Permission level 3.【F:docs/commands/commands.mdx†L8-L9】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L40-L58】 |
+| `/automodpack config reload` | Reloads `automodpack-server.json` after manual edits. | Permission level 3.【F:docs/commands/commands.mdx†L9-L10】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L58-L84】 |
+
+`/amp` is registered as a shorthand alias for `/automodpack` and shares the same permission level requirements.【F:docs/commands/commands.mdx†L1-L2】【F:src/main/java/pl/skidam/automodpack/modpack/Commands.java†L66-L72】 On Bukkit-based servers, permission level 3 corresponds to operators; use your permission plugin to grant the equivalent capability if you want trusted staff to run the commands without full operator status.
+
 ## 🙏 Huge Thanks to Our Supporters!
 
 AutoModpack wouldn't be where it is without the amazing community!
