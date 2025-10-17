@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -177,6 +179,75 @@ public final class ModpackHostService implements AutoCloseable {
 
     public Path configMirrorDirectory() {
         return configMirrorDir;
+    }
+
+    public synchronized boolean regenerateModpack() {
+        if (GlobalVariables.modpackExecutor == null) {
+            return false;
+        }
+
+        return GlobalVariables.modpackExecutor.generateNew();
+    }
+
+    public synchronized boolean isHostRunning() {
+        return GlobalVariables.hostServer != null && GlobalVariables.hostServer.isRunning();
+    }
+
+    public synchronized boolean startHost() {
+        if (GlobalVariables.hostServer == null || GlobalVariables.hostServer.isRunning()) {
+            return false;
+        }
+
+        GlobalVariables.hostServer.start();
+        return GlobalVariables.hostServer.isRunning();
+    }
+
+    public synchronized boolean stopHost() {
+        if (GlobalVariables.hostServer == null || !GlobalVariables.hostServer.isRunning()) {
+            return false;
+        }
+
+        return GlobalVariables.hostServer.stop();
+    }
+
+    public synchronized boolean restartHost() {
+        if (GlobalVariables.hostServer == null) {
+            return false;
+        }
+
+        boolean wasRunning = GlobalVariables.hostServer.isRunning();
+        if (wasRunning && !GlobalVariables.hostServer.stop()) {
+            return false;
+        }
+
+        GlobalVariables.hostServer.start();
+        return GlobalVariables.hostServer.isRunning();
+    }
+
+    public synchronized List<String> activeConnectionSecrets() {
+        if (GlobalVariables.hostServer == null) {
+            return List.of();
+        }
+
+        return Collections.unmodifiableList(new ArrayList<>(GlobalVariables.hostServer.getConnections().values()));
+    }
+
+    public synchronized String certificateFingerprint() {
+        if (GlobalVariables.hostServer == null) {
+            return null;
+        }
+
+        return GlobalVariables.hostServer.getCertificateFingerprint();
+    }
+
+    public synchronized boolean reloadServerConfigFromDisk() {
+        Jsons.ServerConfigFieldsV2 reloaded = ConfigTools.load(GlobalVariables.serverConfigFile, Jsons.ServerConfigFieldsV2.class);
+        if (reloaded == null) {
+            return false;
+        }
+
+        GlobalVariables.serverConfig = reloaded;
+        return true;
     }
 
     private LoaderManagerService.ModPlatform resolvePlatform(String loaderId) {

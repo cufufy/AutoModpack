@@ -75,6 +75,20 @@ That's typically all you need to do! AutoModpack will automatically create the m
 
 Prefer an all-in-one solution? You can also use our [modified Fabric installer](https://github.com/Skidamek/AutoModpack-Installer/releases/tag/Latest) which downloads AutoModpack alongside the Fabric loader.
 
+## 🌐 Self-Host the AutoModpack Downloads
+
+You don't need an external file host—AutoModpack can serve your modpack directly to players. To run the built-in host yourself:
+
+1. **Install AutoModpack on the server** (mod or Paper/Spigot plugin) and start it once so the initial metadata is generated.
+2. **Curate the files you want to ship:**
+   * Modded servers mirror the `/mods` folder and any additional directories configured in `automodpack-server.json`.
+   * The Paper/Spigot plugin creates managed folders at `plugins/AutoModpackPlugin/mods/` and `plugins/AutoModpackPlugin/configs/`; drop your jars/configs there and the plugin keeps them mirrored in the hosted modpack directory.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModpackHostService.java†L95-L144】
+3. **Expose the host to players.** By default the host binds to the Minecraft port; alternatively set `server-host.bind-address`/`bind-port` (or the plugin's `server-host.*` entries) to run on a separate interface/port and forward it through your firewall or reverse proxy.【F:server-plugin/src/main/resources/config.yml†L12-L18】
+4. **Share the address AutoModpack advertises.** Clients receive the value from `server-host.address-to-send`/`port-to-send`, so make sure it's reachable from outside your network.【F:server-plugin/src/main/resources/config.yml†L13-L17】
+5. **Manage the host in-game or from console:** `/automodpack host start|stop|restart` toggles the host, `/automodpack host connections` shows active downloads, and `/automodpack host fingerprint` prints the TLS fingerprint your players should verify on first connect.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/command/AutoModpackCommand.java†L53-L145】
+
+Whenever you edit the hosted files, AutoModpack regenerates the metadata automatically. You can trigger a manual rebuild with `/automodpack generate`, and `/automodpack config reload` refreshes `automodpack-server.json` without a restart.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/command/AutoModpackCommand.java†L38-L115】【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModpackHostService.java†L146-L188】
+
 ## 🧩 Paper & Spigot Server Plugin
 
 AutoModpack ships with a dedicated Bukkit-compatible plugin (`AutoModpackPlugin`) that lets you run the host-side logic without installing a traditional mod loader on your server. The plugin mirrors the behaviour of the mod: it generates modpack metadata, serves it to clients, and keeps track of mod/config changes in real time.
@@ -90,6 +104,14 @@ AutoModpack ships with a dedicated Bukkit-compatible plugin (`AutoModpackPlugin`
 5. Restart or reload the server to let AutoModpack regenerate the modpack metadata.
 
 The plugin keeps watching the `mods/` directory for file changes, so future updates are picked up automatically without restarting the server.【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/mod/ModRepositoryWatcher.java†L32-L70】
+
+### Building the Plugin
+
+Use Gradle to rebuild the plugin after making changes:
+
+```bash
+./gradlew :server-plugin:build --rerun-tasks --console=plain
+```
 
 ### Hosting Configuration
 
@@ -112,6 +134,8 @@ Typical workflow for server administrators:
 4. **Reload configuration** – `/automodpack config reload`
 
 These commands mirror the Fabric/Forge mod, so your players already familiar with AutoModpack will feel at home.【F:docs/commands/commands.mdx†L1-L10】
+
+On Bukkit servers the plugin registers `/automodpack` (alias `/amp`) with the `automodpack.admin` permission, which defaults to OPs. Grant that node to trusted staff to let them manage the host without giving them full operator powers.【F:server-plugin/src/main/resources/plugin.yml†L12-L19】【F:server-plugin/src/main/java/pl/skidam/automodpack/plugin/command/AutoModpackCommand.java†L21-L33】
 
 ### Commands & Permissions
 

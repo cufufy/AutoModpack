@@ -8,3 +8,13 @@ website: https://modrinth.com/mod/automodpack
 depend: []
 softdepend: []
 load: STARTUP
+commands:
+  automodpack:
+    description: Controls AutoModpack hosting and configuration.
+    usage: /automodpack [generate|host|config]
+    aliases: [amp]
+    permission: automodpack.admin
+permissions:
+  automodpack.admin:
+    description: Allows access to AutoModpack administrative commands.
+    default: op

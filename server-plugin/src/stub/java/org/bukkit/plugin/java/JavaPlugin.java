@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.command.PluginCommand;
 
 public abstract class JavaPlugin implements Plugin {
     private final Logger logger = Logger.getLogger(getClass().getName());
@@ -36,6 +37,10 @@ public abstract class JavaPlugin implements Plugin {
     @Override
     public InputStream getResource(String path) {
         return getClass().getClassLoader().getResourceAsStream(Objects.requireNonNull(path));
+    }
+
+    public PluginCommand getCommand(String name) {
+        return null;
     }
 
     public void saveDefaultConfig() {
