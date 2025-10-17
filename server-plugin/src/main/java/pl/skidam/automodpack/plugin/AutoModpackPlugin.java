@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.logging.Level;
 
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import pl.skidam.automodpack.plugin.command.AutoModpackCommand;
 import pl.skidam.automodpack.plugin.bridge.LoginBridgeManager;
 import pl.skidam.automodpack.plugin.config.PluginSettings;
 import pl.skidam.automodpack.plugin.config.SettingsLoader;
@@ -29,6 +31,15 @@ public final class AutoModpackPlugin extends JavaPlugin {
 
             loginBridge = new LoginBridgeManager(this, settings, getLogger());
             loginBridge.start();
+
+            AutoModpackCommand command = new AutoModpackCommand(this, hostService);
+            PluginCommand pluginCommand = getCommand("automodpack");
+            if (pluginCommand != null) {
+                pluginCommand.setExecutor(command);
+                pluginCommand.setTabCompleter(command);
+            } else {
+                getLogger().warning("Unable to register /automodpack command - missing plugin.yml definition");
+            }
 
             getLogger().info("AutoModpack plugin initialized. Mods directory: " + hostService.modsDirectory());
         } catch (Exception e) {
