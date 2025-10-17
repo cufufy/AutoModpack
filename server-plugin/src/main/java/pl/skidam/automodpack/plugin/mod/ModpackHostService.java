@@ -120,7 +120,11 @@ public final class ModpackHostService implements AutoCloseable {
         GlobalVariables.hostServer.start();
 
         if (!GlobalVariables.hostServer.isRunning()) {
-            throw new IOException("Failed to start AutoModpack host server");
+            if (!GlobalVariables.hostServer.shouldHost()) {
+                logger.warning("AutoModpack host server was not started because there is no modpack content to host yet.");
+            } else {
+                throw new IOException("Failed to start AutoModpack host server");
+            }
         }
     }
 
