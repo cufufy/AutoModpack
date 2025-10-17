@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -42,17 +43,27 @@ public final class ModpackHostService implements AutoCloseable {
 
         initializeGlobalState();
         reloadServerConfig();
-        startHostInfrastructure();
-        startWatchers();
+
+        boolean started = false;
+        try {
+            startHostInfrastructure();
+            startWatchers();
+            started = true;
+        } finally {
+            if (!started) {
+                close();
+            }
+        }
     }
 
     private void initializeGlobalState() {
         GlobalVariables.AM_VERSION = settings.automodpackVersion();
         GlobalVariables.MC_VERSION = settings.minecraftVersion();
         String primaryLoader = settings.acceptedLoaders().isEmpty() ? "fabric" : settings.acceptedLoaders().get(0);
-        GlobalVariables.LOADER = primaryLoader;
+        String normalizedLoader = primaryLoader == null ? "fabric" : primaryLoader.toLowerCase(Locale.ROOT);
+        GlobalVariables.LOADER = normalizedLoader;
         GlobalVariables.LOADER_VERSION = "plugin";
-        GlobalVariables.LOADER_MANAGER = new SpigotLoaderManager(LoaderManagerService.ModPlatform.FABRIC, "plugin");
+        GlobalVariables.LOADER_MANAGER = new SpigotLoaderManager(resolvePlatform(normalizedLoader), "plugin");
         GlobalVariables.GAME_CALL = new PluginGameCall();
     }
 
@@ -162,5 +173,17 @@ public final class ModpackHostService implements AutoCloseable {
 
     public Path configMirrorDirectory() {
         return configMirrorDir;
+    }
+
+    private LoaderManagerService.ModPlatform resolvePlatform(String loaderId) {
+        if (loaderId == null) {
+            return LoaderManagerService.ModPlatform.FABRIC;
+        }
+        return switch (loaderId.toLowerCase(Locale.ROOT)) {
+            case "quilt" -> LoaderManagerService.ModPlatform.QUILT;
+            case "forge" -> LoaderManagerService.ModPlatform.FORGE;
+            case "neoforge" -> LoaderManagerService.ModPlatform.NEOFORGE;
+            default -> LoaderManagerService.ModPlatform.FABRIC;
+        };
     }
 }
