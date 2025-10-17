@@ -1,52 +1,35 @@
 package pl.skidam.automodpack.plugin.core;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 import pl.skidam.automodpack_core.GlobalVariables;
 
 public final class GlobalPathBootstrap {
-    private static final Map<String, Function<Path, Object>> PATH_FIELDS = new HashMap<>();
-
-    static {
-        PATH_FIELDS.put("automodpackDir", base -> base);
-        PATH_FIELDS.put("hostModpackDir", base -> base.resolve("modpack"));
-        PATH_FIELDS.put("hostContentModpackDir", base -> base.resolve("modpack").resolve("main"));
-        PATH_FIELDS.put("serverConfigFile", base -> base.resolve("automodpack-server.json"));
-        PATH_FIELDS.put("serverCoreConfigFile", base -> base.resolve("automodpack-core.json"));
-        PATH_FIELDS.put("privateDir", base -> base.resolve(".private"));
-        PATH_FIELDS.put("serverSecretsFile", base -> base.resolve(".private").resolve("automodpack-secrets.json"));
-        PATH_FIELDS.put("knownHostsFile", base -> base.resolve(".private").resolve("automodpack-known-hosts.json"));
-        PATH_FIELDS.put("serverCertFile", base -> base.resolve(".private").resolve("cert.crt"));
-        PATH_FIELDS.put("serverPrivateKeyFile", base -> base.resolve(".private").resolve("key.pem"));
-        PATH_FIELDS.put("hostModpackContentFile", base -> base.resolve("modpack").resolve("automodpack-content.json"));
-    }
-
     private GlobalPathBootstrap() {
     }
 
     public static void redirect(Path baseDirectory) {
-        PATH_FIELDS.forEach((fieldName, resolver) -> setStaticField(fieldName, resolver.apply(baseDirectory)));
-    }
+        Path base = baseDirectory.toAbsolutePath();
 
-    private static void setStaticField(String fieldName, Object value) {
-        try {
-            VarHandle handle = MethodHandles.privateLookupIn(GlobalVariables.class, MethodHandles.lookup())
-                    .findStaticVarHandle(GlobalVariables.class, fieldName, value.getClass());
-            handle.set(value);
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {
-            // fallback to standard reflection for legacy fields
-            try {
-                var field = GlobalVariables.class.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                field.set(null, value);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("Failed to override GlobalVariables." + fieldName, e);
-            }
-        }
+        GlobalVariables.automodpackDir = base;
+        GlobalVariables.MODS_DIR = base.resolve("mods");
+
+        GlobalVariables.hostModpackDir = base.resolve("host-modpack");
+        GlobalVariables.hostContentModpackDir = GlobalVariables.hostModpackDir.resolve("main");
+        GlobalVariables.hostModpackContentFile = GlobalVariables.hostModpackDir.resolve("automodpack-content.json");
+
+        GlobalVariables.serverConfigFile = base.resolve("automodpack-server.json");
+        GlobalVariables.serverCoreConfigFile = base.resolve("automodpack-core.json");
+
+        GlobalVariables.privateDir = base.resolve(".private");
+        GlobalVariables.serverSecretsFile = GlobalVariables.privateDir.resolve("automodpack-secrets.json");
+        GlobalVariables.knownHostsFile = GlobalVariables.privateDir.resolve("automodpack-known-hosts.json");
+        GlobalVariables.serverCertFile = GlobalVariables.privateDir.resolve("cert.crt");
+        GlobalVariables.serverPrivateKeyFile = GlobalVariables.privateDir.resolve("key.pem");
+        GlobalVariables.clientSecretsFile = GlobalVariables.privateDir.resolve("automodpack-client-secrets.json");
+
+        GlobalVariables.modpackContentTempFile = base.resolve("automodpack-content.json.temp");
+        GlobalVariables.clientConfigFile = base.resolve("automodpack-client.json");
+        GlobalVariables.modpacksDir = base.resolve("modpacks");
     }
 }

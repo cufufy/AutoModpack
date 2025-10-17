@@ -16,6 +16,7 @@ java {
 
 repositories {
     mavenCentral()
+    maven("https://repo1.maven.org/maven2/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.papermc.io/repository/maven-snapshots/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
@@ -23,6 +24,8 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.3")
 }
 
 sourceSets {
@@ -43,6 +46,10 @@ tasks.named<JavaCompile>("compileJava") {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 val pluginBaseName = "AutoModpackPlugin"
