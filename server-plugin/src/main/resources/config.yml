@@ -1,0 +1,17 @@
+force-mod: false
+nag-missing-mod: true
+nag-message: "We have a preferred modpack, please install AutoMod if you would like to have an enhanced experience."
+nag-link-text: "Download AutoModpack"
+nag-link-url: "https://modrinth.com/mod/automodpack"
+accepted-loaders:
+  - fabric
+modpack-name: "ServerModpack"
+automodpack-version: "4.0.0-beta37"
+minecraft-version: "1.20.4"
+server-host:
+  bind-address: ""
+  bind-port: -1
+  address-to-send: ""
+  port-to-send: -1
+  disable-internal-tls: false
+  bandwidth-limit: 0
